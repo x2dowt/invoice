@@ -21,7 +21,7 @@
     <div class="no-print mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div>
         <h1 class="text-xl font-bold text-gray-800">Skating Coaching Invoice Generator</h1>
-        <p class="text-xs text-gray-500">Customizable invoice with dynamic PDF export name & lesson presets.</p>
+        <p class="text-xs text-gray-500">Customizable invoice with manual due date & dynamic PDF export.</p>
       </div>
       <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-md shadow transition">
         Download PDF Invoice
@@ -57,7 +57,10 @@
         <div class="text-right">
           <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Payment Details:</h3>
           <input type="text" value="e-Transfer to: coach@example.com" class="text-xs text-gray-600 text-right border-b border-transparent hover:border-gray-300 outline-none w-full">
-          <p class="text-xs font-semibold text-red-600 mt-1">Due 10 days after invoice date</p>
+          <div class="flex items-center justify-end gap-1 mt-1">
+            <span class="text-xs font-semibold text-red-600">Due:</span>
+            <input type="text" value="10 days after invoice date" class="text-xs font-semibold text-red-600 text-right border-b border-transparent hover:border-red-300 focus:border-red-500 outline-none w-48">
+          </div>
         </div>
       </div>
 
@@ -75,7 +78,7 @@
           </tr>
         </thead>
         <tbody id="line-items">
-          <!-- Rows will be dynamically appended here -->
+          <!-- Dynamic Rows -->
         </tbody>
       </table>
 
@@ -191,7 +194,6 @@
     function downloadPDF() {
       const element = document.getElementById('invoice');
       
-      // Dynamic naming based on inputs
       const dateVal = document.getElementById('invoice-date').value;
       let monthName = "Invoice";
       if (dateVal) {
@@ -202,7 +204,6 @@
       const skaterOrClient = document.getElementById('billed-to-name').value.trim() || 'Client';
       const club = document.getElementById('billed-to-club').value.trim() || '';
 
-      // Format string clean of special characters
       let rawFilename = `${monthName}_${skaterOrClient}${club ? '_' + club : ''}_Invoice`;
       let cleanFilename = rawFilename.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf';
 
