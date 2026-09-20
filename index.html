@@ -12,7 +12,7 @@
     @media print {
       .no-print { display: none !important; }
       body { background: white !important; padding: 0 !important; }
-      #invoice { shadow: none !important; border: none !important; padding: 0 !important; }
+      #invoice { box-shadow: none !important; border: none !important; padding: 0 !important; }
     }
   </style>
 </head>
@@ -89,25 +89,53 @@
         </tbody>
       </table>
 
-      <!-- Quick Add Control Bar (Hidden when Printing) -->
-      <div class="no-print bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
-        <div class="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">Quick Add New Lesson Row:</div>
-        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
-          <input type="text" id="add-skater" placeholder="Skater Name" class="p-1.5 border rounded">
-          <input type="text" id="add-date" placeholder="Date (e.g. Sept 12)" class="p-1.5 border rounded">
-          <select id="add-type" onchange="autoFillRate()" class="p-1.5 border rounded bg-white">
-            <option value="Private (15 x $7.50)">Private (15 min - $7.50)</option>
-            <option value="Semi-Private (15 - $4.00)">Semi-Private (15 min - $4.00)</option>
-            <option value="Private (10 x $5.00)">Private (10 min - $5.00)</option>
-            <option value="Jumpstart (45 min)">Jumpstart (45 min)</option>
-            <option value="CanSkate (45 min)">CanSkate (45 min)</option>
-            <option value="Custom">Custom Lesson</option>
-          </select>
-          <input type="number" id="add-qty" value="1" placeholder="Qty" class="p-1.5 border rounded text-center">
-          <input type="number" step="0.01" id="add-price" value="7.50" placeholder="Price" class="p-1.5 border rounded text-right">
-          <button onclick="addCustomRow()" class="bg-gray-800 hover:bg-black text-white font-semibold rounded py-1.5 transition">
-            + Add Row
-          </button>
+      <!-- Rate Settings & Quick Add Control Bar (Hidden on PDF and Print) -->
+      <div class="no-print space-y-4 mb-8">
+        <!-- Rate Customizer -->
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div class="flex justify-between items-center mb-2">
+            <div class="font-bold text-xs uppercase tracking-wider text-blue-900">Configure Default Rate Settings ($):</div>
+            <button onclick="resetDefaultRates()" class="text-xs text-blue-600 hover:underline">Reset Defaults</button>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+            <div>
+              <label class="block text-gray-600 mb-0.5">Private (15m)</label>
+              <input type="number" step="0.01" id="rate-priv15" value="7.50" onchange="updateRateDropdowns()" class="w-full p-1.5 border rounded bg-white font-medium">
+            </div>
+            <div>
+              <label class="block text-gray-600 mb-0.5">Semi-Private (15m)</label>
+              <input type="number" step="0.01" id="rate-semi15" value="4.00" onchange="updateRateDropdowns()" class="w-full p-1.5 border rounded bg-white font-medium">
+            </div>
+            <div>
+              <label class="block text-gray-600 mb-0.5">Private (10m)</label>
+              <input type="number" step="0.01" id="rate-priv10" value="5.00" onchange="updateRateDropdowns()" class="w-full p-1.5 border rounded bg-white font-medium">
+            </div>
+            <div>
+              <label class="block text-gray-600 mb-0.5">Jumpstart (45m)</label>
+              <input type="number" step="0.01" id="rate-jump" value="22.50" onchange="updateRateDropdowns()" class="w-full p-1.5 border rounded bg-white font-medium">
+            </div>
+            <div>
+              <label class="block text-gray-600 mb-0.5">CanSkate (45m)</label>
+              <input type="number" step="0.01" id="rate-canskate" value="22.50" onchange="updateRateDropdowns()" class="w-full p-1.5 border rounded bg-white font-medium">
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Add Bar -->
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div class="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">Quick Add New Lesson Row:</div>
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+            <input type="text" id="add-skater" placeholder="Skater Name" class="p-1.5 border rounded bg-white">
+            <input type="text" id="add-date" placeholder="Date (e.g. Sept 12)" class="p-1.5 border rounded bg-white">
+            <select id="add-type" onchange="autoFillRate()" class="p-1.5 border rounded bg-white font-medium">
+              <!-- Options populated by JS -->
+            </select>
+            <input type="number" id="add-qty" value="1" placeholder="Qty" class="p-1.5 border rounded text-center bg-white">
+            <input type="number" step="0.01" id="add-price" value="7.50" placeholder="Price" class="p-1.5 border rounded text-right bg-white">
+            <button onclick="addCustomRow()" class="bg-gray-800 hover:bg-black text-white font-semibold rounded py-1.5 transition">
+              + Add Row
+            </button>
+          </div>
         </div>
       </div>
 
@@ -132,14 +160,44 @@
   <script>
     document.getElementById('invoice-date').valueAsDate = new Date();
 
+    function updateRateDropdowns() {
+      const p15 = parseFloat(document.getElementById('rate-priv15').value || 0).toFixed(2);
+      const s15 = parseFloat(document.getElementById('rate-semi15').value || 0).toFixed(2);
+      const p10 = parseFloat(document.getElementById('rate-priv10').value || 0).toFixed(2);
+      const j45 = parseFloat(document.getElementById('rate-jump').value || 0).toFixed(2);
+      const c45 = parseFloat(document.getElementById('rate-canskate').value || 0).toFixed(2);
+
+      const select = document.getElementById('add-type');
+      const currentSelection = select.value;
+
+      select.innerHTML = `
+        <option value="Private (15 min - $${p15})" data-price="${p15}">Private (15 min - $${p15})</option>
+        <option value="Semi-Private (15 min - $${s15})" data-price="${s15}">Semi-Private (15 min - $${s15})</option>
+        <option value="Private (10 min - $${p10})" data-price="${p10}">Private (10 min - $${p10})</option>
+        <option value="Jumpstart (45 min - $${j45})" data-price="${j45}">Jumpstart (45 min - $${j45})</option>
+        <option value="CanSkate (45 min - $${c45})" data-price="${c45}">CanSkate (45 min - $${c45})</option>
+        <option value="Custom Lesson" data-price="0.00">Custom Lesson</option>
+      `;
+
+      autoFillRate();
+    }
+
+    function resetDefaultRates() {
+      document.getElementById('rate-priv15').value = "7.50";
+      document.getElementById('rate-semi15').value = "4.00";
+      document.getElementById('rate-priv10').value = "5.00";
+      document.getElementById('rate-jump').value = "22.50";
+      document.getElementById('rate-canskate').value = "22.50";
+      updateRateDropdowns();
+    }
+
     function autoFillRate() {
-      const type = document.getElementById('add-type').value;
-      const priceInput = document.getElementById('add-price');
-      
-      if (type.includes('$7.50')) priceInput.value = '7.50';
-      else if (type.includes('$4.00')) priceInput.value = '4.00';
-      else if (type.includes('$5.00')) priceInput.value = '5.00';
-      else priceInput.value = '0.00';
+      const select = document.getElementById('add-type');
+      const selectedOption = select.options[select.selectedIndex];
+      if (selectedOption) {
+        const price = selectedOption.getAttribute('data-price') || '0.00';
+        document.getElementById('add-price').value = price;
+      }
     }
 
     function calculateTotals() {
@@ -198,9 +256,13 @@
       calculateTotals();
     }
 
-    function downloadPDF() {
+    async function downloadPDF() {
       const element = document.getElementById('invoice');
-      
+      const noPrintElements = element.querySelectorAll('.no-print');
+
+      // Hide non-printable elements inside invoice explicitly for JS PDF generator
+      noPrintElements.forEach(el => el.style.display = 'none');
+
       const dateVal = document.getElementById('invoice-date').value;
       let monthName = "Invoice";
       if (dateVal) {
@@ -225,16 +287,23 @@
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      if (typeof html2pdf !== 'undefined') {
-        html2pdf().set(opt).from(element).save().catch(err => {
-          console.error("html2pdf failed, falling back to print dialog:", err);
+      try {
+        if (typeof html2pdf !== 'undefined') {
+          await html2pdf().set(opt).from(element).save();
+        } else {
           window.print();
-        });
-      } else {
+        }
+      } catch (err) {
+        console.error("PDF generation failed, falling back to print dialog:", err);
         window.print();
+      } finally {
+        // Restore controls after export finishes
+        noPrintElements.forEach(el => el.style.display = '');
       }
     }
 
+    // Initialize default rates dropdown
+    updateRateDropdowns();
     calculateTotals();
   </script>
 </body>
