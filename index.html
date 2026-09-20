@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice Maker</title>
+  <title>Skating Coaching Invoice Generator</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- html2pdf Library -->
@@ -23,7 +23,7 @@
     <div class="no-print mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div>
         <h1 class="text-xl font-bold text-gray-800">Skating Coaching Invoice Generator</h1>
-        <p class="text-xs text-gray-500">"Claude, make me an invoice. No mistakes!".</p>
+        <p class="text-xs text-gray-500">Customizable invoice with manual due date & dynamic PDF export.</p>
       </div>
       <div class="flex gap-2">
         <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-md shadow transition text-sm">
@@ -168,7 +168,6 @@
       const c45 = parseFloat(document.getElementById('rate-canskate').value || 0).toFixed(2);
 
       const select = document.getElementById('add-type');
-      const currentSelection = select.value;
 
       select.innerHTML = `
         <option value="Private (15 min - $${p15})" data-price="${p15}">Private (15 min - $${p15})</option>
@@ -260,8 +259,29 @@
       const element = document.getElementById('invoice');
       const noPrintElements = element.querySelectorAll('.no-print');
 
-      // Hide non-printable elements inside invoice explicitly for JS PDF generator
+      // 1. Hide non-printable elements inside invoice explicitly
       noPrintElements.forEach(el => el.style.display = 'none');
+
+      // 2. Temporarily replace input fields with static span text so html2canvas renders description & text accurately
+      const inputs = element.querySelectorAll('input');
+      const replacements = [];
+
+      inputs.forEach(input => {
+        if (input.type !== 'hidden') {
+          const span = document.createElement('span');
+          span.innerText = input.value;
+          span.className = input.className;
+          
+          // Preserve input display styling
+          if (input.classList.contains('text-right')) span.style.textAlign = 'right';
+          if (input.classList.contains('text-center')) span.style.textAlign = 'center';
+          
+          input.parentNode.insertBefore(span, input);
+          input.style.display = 'none';
+          
+          replacements.push({ input, span });
+        }
+      });
 
       const dateVal = document.getElementById('invoice-date').value;
       let monthName = "Invoice";
@@ -297,8 +317,12 @@
         console.error("PDF generation failed, falling back to print dialog:", err);
         window.print();
       } finally {
-        // Restore controls after export finishes
+        // Restore controls & editable inputs after export finishes
         noPrintElements.forEach(el => el.style.display = '');
+        replacements.forEach(({ input, span }) => {
+          input.style.display = '';
+          span.remove();
+        });
       }
     }
 
