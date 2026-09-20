@@ -11,6 +11,8 @@
   <style>
     @media print {
       .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; }
+      #invoice { shadow: none !important; border: none !important; padding: 0 !important; }
     }
   </style>
 </head>
@@ -23,9 +25,14 @@
         <h1 class="text-xl font-bold text-gray-800">Skating Coaching Invoice Generator</h1>
         <p class="text-xs text-gray-500">Customizable invoice with manual due date & dynamic PDF export.</p>
       </div>
-      <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-md shadow transition">
-        Download PDF Invoice
-      </button>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-md shadow transition text-sm">
+          Print / Save PDF
+        </button>
+        <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-md shadow transition text-sm">
+          Download PDF
+        </button>
+      </div>
     </div>
 
     <!-- Printable Invoice Container -->
@@ -33,16 +40,16 @@
       
       <!-- Header -->
       <div class="flex justify-between items-start border-b pb-6 mb-6">
-        <div>
-          <input type="text" value="COACH NAME / SKATING ACADEMY" class="font-bold text-2xl text-gray-900 border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none w-full mb-1">
-          <input type="text" value="Figure Skating Coach & Instructor" class="text-sm text-gray-500 border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none w-full">
-          <input type="text" value="Email: coach@example.com | Phone: (123) 456-7890" class="text-xs text-gray-400 border-b border-transparent hover:border-gray-300 focus:border-blue-500 outline-none w-full mt-1">
+        <div class="w-2/3">
+          <input type="text" value="COACH NAME / SKATING ACADEMY" class="font-bold text-2xl text-gray-900 outline-none w-full mb-1 bg-transparent">
+          <input type="text" value="Figure Skating Coach & Instructor" class="text-sm text-gray-500 outline-none w-full bg-transparent">
+          <input type="text" value="Email: coach@example.com | Phone: (123) 456-7890" class="text-xs text-gray-400 outline-none w-full mt-1 bg-transparent">
         </div>
-        <div class="text-right">
+        <div class="text-right w-1/3">
           <h2 class="text-3xl font-extrabold text-blue-600 uppercase tracking-wide">INVOICE</h2>
           <div class="mt-2 text-sm text-gray-600">
-            <label class="block">Invoice #: <input type="text" id="invoice-num" value="INV-2026-001" class="font-semibold text-gray-800 text-right outline-none w-28 border-b border-transparent hover:border-gray-300"></label>
-            <label class="block">Date: <input type="date" id="invoice-date" class="font-semibold text-gray-800 text-right outline-none border-b border-transparent hover:border-gray-300"></label>
+            <label class="block">Invoice #: <input type="text" id="invoice-num" value="INV-2026-001" class="font-semibold text-gray-800 text-right outline-none w-28 bg-transparent"></label>
+            <label class="block">Date: <input type="date" id="invoice-date" class="font-semibold text-gray-800 text-right outline-none bg-transparent"></label>
           </div>
         </div>
       </div>
@@ -51,15 +58,15 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-sm">
         <div>
           <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Billed To:</h3>
-          <input type="text" id="billed-to-name" placeholder="Parent or Skater Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1">
-          <input type="text" id="billed-to-club" placeholder="Arena / Club Name" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1">
+          <input type="text" id="billed-to-name" placeholder="Parent or Skater Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1 bg-transparent">
+          <input type="text" id="billed-to-club" placeholder="Arena / Club Name" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1 bg-transparent">
         </div>
         <div class="text-right">
           <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Payment Details:</h3>
-          <input type="text" value="e-Transfer to: coach@example.com" class="text-xs text-gray-600 text-right border-b border-transparent hover:border-gray-300 outline-none w-full">
+          <input type="text" value="e-Transfer to: coach@example.com" class="text-xs text-gray-600 text-right outline-none w-full bg-transparent">
           <div class="flex items-center justify-end gap-1 mt-1">
             <span class="text-xs font-semibold text-red-600">Due:</span>
-            <input type="text" value="10 days after invoice date" class="text-xs font-semibold text-red-600 text-right border-b border-transparent hover:border-red-300 focus:border-red-500 outline-none w-48">
+            <input type="text" value="10 days after invoice date" class="text-xs font-semibold text-red-600 text-right border-b border-transparent hover:border-red-300 focus:border-red-500 outline-none w-48 bg-transparent">
           </div>
         </div>
       </div>
@@ -197,8 +204,11 @@
       const dateVal = document.getElementById('invoice-date').value;
       let monthName = "Invoice";
       if (dateVal) {
-        const d = new Date(dateVal + 'T00:00:00');
-        monthName = d.toLocaleString('default', { month: 'Long' });
+        const parts = dateVal.split('-');
+        if (parts.length === 3) {
+          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          monthName = d.toLocaleString('default', { month: 'long' });
+        }
       }
 
       const skaterOrClient = document.getElementById('billed-to-name').value.trim() || 'Client';
@@ -208,14 +218,21 @@
       let cleanFilename = rawFilename.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf';
 
       const opt = {
-        margin:       0.4,
+        margin:       0.3,
         filename:     cleanFilename,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(element).save();
+      if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(element).save().catch(err => {
+          console.error("html2pdf failed, falling back to print dialog:", err);
+          window.print();
+        });
+      } else {
+        window.print();
+      }
     }
 
     calculateTotals();
