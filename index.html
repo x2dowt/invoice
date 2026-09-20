@@ -21,7 +21,7 @@
     <div class="no-print mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div>
         <h1 class="text-xl font-bold text-gray-800">Skating Coaching Invoice Generator</h1>
-        <p class="text-xs text-gray-500">Preset rates: 15 min Private ($7.50), 15 min Semi-Private ($4.00), 10 min Private ($5.00).</p>
+        <p class="text-xs text-gray-500">Customizable invoice with dynamic PDF export name & lesson presets.</p>
       </div>
       <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-md shadow transition">
         Download PDF Invoice
@@ -41,7 +41,7 @@
         <div class="text-right">
           <h2 class="text-3xl font-extrabold text-blue-600 uppercase tracking-wide">INVOICE</h2>
           <div class="mt-2 text-sm text-gray-600">
-            <label class="block">Invoice #: <input type="text" value="INV-2026-001" class="font-semibold text-gray-800 text-right outline-none w-28 border-b border-transparent hover:border-gray-300"></label>
+            <label class="block">Invoice #: <input type="text" id="invoice-num" value="INV-2026-001" class="font-semibold text-gray-800 text-right outline-none w-28 border-b border-transparent hover:border-gray-300"></label>
             <label class="block">Date: <input type="date" id="invoice-date" class="font-semibold text-gray-800 text-right outline-none border-b border-transparent hover:border-gray-300"></label>
           </div>
         </div>
@@ -51,13 +51,13 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-sm">
         <div>
           <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Billed To:</h3>
-          <input type="text" placeholder="Parent or Skater / Club Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1">
-          <input type="text" placeholder="Arena / Location" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1">
+          <input type="text" id="billed-to-name" placeholder="Parent or Skater Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1">
+          <input type="text" id="billed-to-club" placeholder="Arena / Club Name" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1">
         </div>
         <div class="text-right">
           <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Payment Details:</h3>
           <input type="text" value="e-Transfer to: coach@example.com" class="text-xs text-gray-600 text-right border-b border-transparent hover:border-gray-300 outline-none w-full">
-          <p class="text-xs text-gray-500 mt-1">Due upon receipt</p>
+          <p class="text-xs font-semibold text-red-600 mt-1">Due 10 days after invoice date</p>
         </div>
       </div>
 
@@ -74,9 +74,12 @@
             <th class="py-3 px-2 text-center no-print w-10"></th>
           </tr>
         </thead>
+        <tbody id="line-items">
+          <!-- Rows will be dynamically appended here -->
+        </tbody>
       </table>
 
-      <!-- Quick Add Control Bar (No Print) -->
+      <!-- Quick Add Control Bar (Hidden when Printing) -->
       <div class="no-print bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
         <div class="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">Quick Add New Lesson Row:</div>
         <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
@@ -86,6 +89,8 @@
             <option value="Private (15 x $7.50)">Private (15 min - $7.50)</option>
             <option value="Semi-Private (15 - $4.00)">Semi-Private (15 min - $4.00)</option>
             <option value="Private (10 x $5.00)">Private (10 min - $5.00)</option>
+            <option value="Jumpstart (45 min)">Jumpstart (45 min)</option>
+            <option value="CanSkate (45 min)">CanSkate (45 min)</option>
             <option value="Custom">Custom Lesson</option>
           </select>
           <input type="number" id="add-qty" value="1" placeholder="Qty" class="p-1.5 border rounded text-center">
@@ -101,7 +106,7 @@
         <div class="w-64 space-y-2 text-sm">
           <div class="flex justify-between text-gray-800 text-xl font-bold border-t pt-2 border-gray-300">
             <span>Total price:</span>
-            <span id="grand-total" class="text-blue-600">$42.50</span>
+            <span id="grand-total" class="text-blue-600">$0.00</span>
           </div>
         </div>
       </div>
@@ -124,6 +129,7 @@
       if (type.includes('$7.50')) priceInput.value = '7.50';
       else if (type.includes('$4.00')) priceInput.value = '4.00';
       else if (type.includes('$5.00')) priceInput.value = '5.00';
+      else priceInput.value = '0.00';
     }
 
     function calculateTotals() {
@@ -149,8 +155,8 @@
     }
 
     function addCustomRow() {
-      const skater = document.getElementById('add-skater').value.trim() || 'Skater';
-      const date = document.getElementById('add-date').value.trim() || 'Date';
+      const skater = document.getElementById('add-skater').value.trim() || '';
+      const date = document.getElementById('add-date').value.trim() || '';
       const desc = document.getElementById('add-type').value;
       const qty = parseFloat(document.getElementById('add-qty').value) || 1;
       const price = parseFloat(document.getElementById('add-price').value) || 0;
@@ -159,8 +165,8 @@
       const tr = document.createElement('tr');
       tr.className = "border-b border-gray-100 text-sm hover:bg-gray-50";
       tr.innerHTML = `
-        <td class="py-2 px-2"><input type="text" value="${skater}" class="item-skater w-full outline-none bg-transparent"></td>
-        <td class="py-2 px-2"><input type="text" value="${date}" class="item-date w-full outline-none bg-transparent"></td>
+        <td class="py-2 px-2"><input type="text" value="${skater}" placeholder="Skater" class="item-skater w-full outline-none bg-transparent"></td>
+        <td class="py-2 px-2"><input type="text" value="${date}" placeholder="Date" class="item-date w-full outline-none bg-transparent"></td>
         <td class="py-2 px-2"><input type="text" value="${desc}" class="item-desc w-full outline-none bg-transparent"></td>
         <td class="py-2 px-2 text-center"><input type="number" value="${qty}" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
         <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="${price.toFixed(2)}" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
@@ -170,7 +176,7 @@
 
       tbody.appendChild(tr);
 
-      // Reset Inputs
+      // Clear inputs for next entry
       document.getElementById('add-skater').value = '';
       document.getElementById('add-date').value = '';
 
@@ -184,9 +190,25 @@
 
     function downloadPDF() {
       const element = document.getElementById('invoice');
+      
+      // Dynamic naming based on inputs
+      const dateVal = document.getElementById('invoice-date').value;
+      let monthName = "Invoice";
+      if (dateVal) {
+        const d = new Date(dateVal + 'T00:00:00');
+        monthName = d.toLocaleString('default', { month: 'Long' });
+      }
+
+      const skaterOrClient = document.getElementById('billed-to-name').value.trim() || 'Client';
+      const club = document.getElementById('billed-to-club').value.trim() || '';
+
+      // Format string clean of special characters
+      let rawFilename = `${monthName}_${skaterOrClient}${club ? '_' + club : ''}_Invoice`;
+      let cleanFilename = rawFilename.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf';
+
       const opt = {
         margin:       0.4,
-        filename:     'skating_invoice.pdf',
+        filename:     cleanFilename,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
