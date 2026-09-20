@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skating Coach Invoice Generator</title>
+  <title>Skating Coaching Invoice Generator</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- html2pdf Library -->
@@ -21,7 +21,7 @@
     <div class="no-print mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div>
         <h1 class="text-xl font-bold text-gray-800">Skating Coaching Invoice Generator</h1>
-        <p class="text-xs text-gray-500">Select skater names, 15-min lesson blocks, and lesson types.</p>
+        <p class="text-xs text-gray-500">Preset rates: 15 min Private ($7.50), 15 min Semi-Private ($4.00), 10 min Private ($5.00).</p>
       </div>
       <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-md shadow transition">
         Download PDF Invoice
@@ -42,25 +42,22 @@
           <h2 class="text-3xl font-extrabold text-blue-600 uppercase tracking-wide">INVOICE</h2>
           <div class="mt-2 text-sm text-gray-600">
             <label class="block">Invoice #: <input type="text" value="INV-2026-001" class="font-semibold text-gray-800 text-right outline-none w-28 border-b border-transparent hover:border-gray-300"></label>
-            <label class="block">Invoice Date: <input type="date" id="invoice-date" class="font-semibold text-gray-800 text-right outline-none border-b border-transparent hover:border-gray-300"></label>
+            <label class="block">Date: <input type="date" id="invoice-date" class="font-semibold text-gray-800 text-right outline-none border-b border-transparent hover:border-gray-300"></label>
           </div>
         </div>
       </div>
 
-      <!-- Bill To & Default Rate Settings -->
+      <!-- Bill To & Payment Terms -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-sm">
         <div>
-          <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Billed To (Skater / Family):</h3>
-          <input type="text" placeholder="Parent or Skater Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1">
-          <input type="text" placeholder="Skating Club / Arena" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1">
+          <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Billed To:</h3>
+          <input type="text" placeholder="Parent or Skater / Club Name" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-full mb-1 p-1">
+          <input type="text" placeholder="Arena / Location" class="text-gray-600 border-b border-gray-200 focus:border-blue-500 outline-none w-full p-1">
         </div>
         <div class="text-right">
-          <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Default Base Rate & Payment Terms:</h3>
-          <div class="flex justify-end items-center gap-2 mb-1">
-            <span class="text-gray-600">Default Hourly Rate ($/hr):</span>
-            <input type="number" id="default-rate" value="30" oninput="updateAllRates()" class="font-semibold text-gray-900 border-b border-gray-300 focus:border-blue-500 outline-none w-16 text-right p-1">
-          </div>
-          <input type="text" value="Payment Due: e-Transfer to coach@example.com" class="text-xs text-gray-500 text-right border-b border-transparent hover:border-gray-300 outline-none w-full mt-1">
+          <h3 class="font-bold text-gray-700 uppercase tracking-wider text-xs mb-2">Payment Details:</h3>
+          <input type="text" value="e-Transfer to: coach@example.com" class="text-xs text-gray-600 text-right border-b border-transparent hover:border-gray-300 outline-none w-full">
+          <p class="text-xs text-gray-500 mt-1">Due upon receipt</p>
         </div>
       </div>
 
@@ -68,232 +65,180 @@
       <table class="w-full text-left mb-6 border-collapse">
         <thead>
           <tr class="border-b-2 border-gray-300 text-xs font-bold uppercase text-gray-600 bg-gray-50">
-            <th class="py-3 px-2 w-32">Date</th>
-            <th class="py-3 px-2 w-32">Lesson Type</th>
-            <th class="py-3 px-2">Skater(s) / Focus Area</th>
-            <th class="py-3 px-2 text-center w-28">Duration</th>
-            <th class="py-3 px-2 text-right w-24">Rate ($/hr)</th>
-            <th class="py-3 px-2 text-right w-24">Amount ($)</th>
+            <th class="py-3 px-2">Skater</th>
+            <th class="py-3 px-2 w-28">Date(s)</th>
+            <th class="py-3 px-2">Description</th>
+            <th class="py-3 px-2 text-center w-16">Qty</th>
+            <th class="py-3 px-2 text-right w-24">Unit price</th>
+            <th class="py-3 px-2 text-right w-24">Total price</th>
             <th class="py-3 px-2 text-center no-print w-10"></th>
           </tr>
         </thead>
         <tbody id="line-items">
-          <!-- Default Example Row -->
+          <!-- Initial Preset Rows based on sample -->
           <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
-            <td class="py-2 px-2">
-              <input type="date" class="item-date outline-none bg-transparent w-full">
-            </td>
-            <td class="py-2 px-2">
-              <select class="item-type text-xs border border-gray-200 rounded p-1 outline-none bg-white w-full">
-                <option value="Private">Private</option>
-                <option value="Semi-Private" selected>Semi-Private</option>
-                <option value="Group">Group</option>
-                <option value="CanSkate / Club">CanSkate / Club</option>
-              </select>
-            </td>
-            <td class="py-2 px-2">
-              <input type="text" value="Natasha, Natalia (S1 Skills)" placeholder="Skater names / skills" class="item-desc w-full outline-none bg-transparent border-b border-transparent focus:border-blue-400">
-            </td>
-            <td class="py-2 px-2 text-center">
-              <select onchange="calculateTotals()" class="item-min text-xs border border-gray-200 rounded p-1 outline-none bg-white text-center w-full">
-                <option value="15" selected>15 min</option>
-                <option value="30">30 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-                <option value="10">10 min</option>
-              </select>
-            </td>
-            <td class="py-2 px-2 text-right">
-              <input type="number" value="30" oninput="calculateTotals()" class="item-rate w-16 text-right outline-none bg-transparent border-b border-transparent focus:border-blue-400">
-            </td>
-            <td class="py-2 px-2 text-right font-semibold item-amount">$7.50</td>
-            <td class="py-2 px-2 text-center no-print">
-              <button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button>
-            </td>
+            <td class="py-2 px-2"><input type="text" value="Andrea" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 3" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Private (15 x $7.50)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="7.50" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$7.50</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Ayla" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 1" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Private (15 x $7.50)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="7.50" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$7.50</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Brynn" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 1" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Semi-Private (15 - $4.00)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="4.00" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$4.00</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Kali" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 1" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Semi-Private (15 - $4.00)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="4.00" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$4.00</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Kailey" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 2" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Private (15 x $7.50)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="7.50" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$7.50</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Abigail" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 3" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Private (10 x $5.00)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="5.00" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$5.00</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+          </tr>
+          <tr class="border-b border-gray-100 text-sm hover:bg-gray-50">
+            <td class="py-2 px-2"><input type="text" value="Stella" class="item-skater w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="June 8" class="item-date w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2"><input type="text" value="Private (15 x $7.50)" class="item-desc w-full outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-center"><input type="number" value="1" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="7.50" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+            <td class="py-2 px-2 text-right font-semibold item-total">$7.50</td>
+            <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
           </tr>
         </tbody>
       </table>
 
-      <!-- Quick Add Controls (No-Print) -->
-      <div class="no-print bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8 space-y-3">
-        <div class="font-bold text-xs uppercase tracking-wider text-gray-600">Quick-Add Lesson Row:</div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-          <!-- Select Skaters -->
-          <div>
-            <label class="block text-gray-600 font-semibold mb-1">Select Skater(s):</label>
-            <div class="space-y-1 max-h-24 overflow-y-auto bg-white p-2 border rounded">
-              <label class="flex items-center gap-1.5"><input type="checkbox" value="Natasha" class="skater-check"> Natasha</label>
-              <label class="flex items-center gap-1.5"><input type="checkbox" value="Natalia" class="skater-check"> Natalia</label>
-              <label class="flex items-center gap-1.5"><input type="checkbox" value="Madeleine" class="skater-check"> Madeleine</label>
-              <label class="flex items-center gap-1.5"><input type="checkbox" value="Dana" class="skater-check"> Dana</label>
-              <label class="flex items-center gap-1.5"><input type="checkbox" value="Methuli" class="skater-check"> Methuli</label>
-            </div>
-            <input type="text" id="custom-skater" placeholder="Or custom name..." class="mt-1 w-full p-1 border rounded text-xs">
-          </div>
-
-          <!-- Lesson Details -->
-          <div>
-            <label class="block text-gray-600 font-semibold mb-1">Lesson Date:</label>
-            <input type="date" id="quick-date" class="w-full p-1 border rounded text-xs mb-2">
-            
-            <label class="block text-gray-600 font-semibold mb-1">Lesson Type:</label>
-            <select id="quick-type" class="w-full p-1 border rounded text-xs bg-white">
-              <option value="Private">Private</option>
-              <option value="Semi-Private">Semi-Private</option>
-              <option value="Group">Group</option>
-              <option value="CanSkate / Club">CanSkate / Club</option>
-            </select>
-          </div>
-
-          <!-- Duration & Focus -->
-          <div>
-            <label class="block text-gray-600 font-semibold mb-1">Duration Block:</label>
-            <select id="quick-min" class="w-full p-1 border rounded text-xs bg-white mb-2">
-              <option value="15" selected>15 min</option>
-              <option value="30">30 min</option>
-              <option value="45">45 min</option>
-              <option value="60">60 min</option>
-              <option value="10">10 min</option>
-            </select>
-
-            <label class="block text-gray-600 font-semibold mb-1">Focus / Notes:</label>
-            <input type="text" id="quick-focus" placeholder="e.g. S1 Skills, Dance, Free Skating" class="w-full p-1 border rounded text-xs">
-          </div>
-
-          <!-- Add Button -->
-          <div class="flex items-end">
-            <button onclick="addCustomRow()" class="w-full bg-gray-800 hover:bg-black text-white font-semibold py-2 px-3 rounded shadow transition text-xs">
-              + Add to Invoice
-            </button>
-          </div>
+      <!-- Quick Add Control Bar (No Print) -->
+      <div class="no-print bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
+        <div class="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">Quick Add New Lesson Row:</div>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+          <input type="text" id="add-skater" placeholder="Skater Name" class="p-1.5 border rounded">
+          <input type="text" id="add-date" placeholder="Date (e.g. Sept 12)" class="p-1.5 border rounded">
+          <select id="add-type" onchange="autoFillRate()" class="p-1.5 border rounded bg-white">
+            <option value="Private (15 x $7.50)">Private (15 min - $7.50)</option>
+            <option value="Semi-Private (15 - $4.00)">Semi-Private (15 min - $4.00)</option>
+            <option value="Private (10 x $5.00)">Private (10 min - $5.00)</option>
+            <option value="Custom">Custom Lesson</option>
+          </select>
+          <input type="number" id="add-qty" value="1" placeholder="Qty" class="p-1.5 border rounded text-center">
+          <input type="number" step="0.01" id="add-price" value="7.50" placeholder="Price" class="p-1.5 border rounded text-right">
+          <button onclick="addCustomRow()" class="bg-gray-800 hover:bg-black text-white font-semibold rounded py-1.5 transition">
+            + Add Row
+          </button>
         </div>
       </div>
 
       <!-- Totals Summary -->
       <div class="flex justify-end border-t border-gray-200 pt-4">
-        <div class="w-72 space-y-2 text-sm">
-          <div class="flex justify-between text-gray-600">
-            <span>Total Time On Ice:</span>
-            <span id="total-minutes" class="font-semibold">15 mins (0.25 hrs)</span>
-          </div>
+        <div class="w-64 space-y-2 text-sm">
           <div class="flex justify-between text-gray-800 text-xl font-bold border-t pt-2 border-gray-300">
-            <span>Total Due:</span>
-            <span id="grand-total" class="text-blue-600">$7.50</span>
+            <span>Total price:</span>
+            <span id="grand-total" class="text-blue-600">$42.50</span>
           </div>
         </div>
       </div>
 
       <!-- Footer Notes -->
-      <div class="mt-12 pt-6 border-t border-gray-100 text-center text-xs text-gray-400">
-        <p>Thank you for skating with us!</p>
+      <div class="mt-12 pt-6 border-t border-gray-100 text-center text-sm text-gray-600">
+        <p>Thank you</p>
       </div>
 
     </div>
   </div>
 
   <script>
-    // Initialize dates to today
-    const todayStr = new Date().toISOString().split('T')[0];
-    document.getElementById('invoice-date').value = todayStr;
-    document.getElementById('quick-date').value = todayStr;
-    
-    // Set initial default date on first row
-    document.querySelector('.item-date').value = todayStr;
+    document.getElementById('invoice-date').valueAsDate = new Date();
 
-    function updateAllRates() {
-      const defaultRate = document.getElementById('default-rate').value;
-      const rateInputs = document.querySelectorAll('.item-rate');
-      rateInputs.forEach(input => {
-        input.value = defaultRate;
-      });
-      calculateTotals();
+    function autoFillRate() {
+      const type = document.getElementById('add-type').value;
+      const priceInput = document.getElementById('add-price');
+      
+      if (type.includes('$7.50')) priceInput.value = '7.50';
+      else if (type.includes('$4.00')) priceInput.value = '4.00';
+      else if (type.includes('$5.00')) priceInput.value = '5.00';
     }
 
     function calculateTotals() {
       const rows = document.querySelectorAll('#line-items tr');
-      let totalMins = 0;
       let grandTotal = 0;
 
       rows.forEach(row => {
-        const minSelect = row.querySelector('.item-min');
-        const rateInput = row.querySelector('.item-rate');
-        const amountCell = row.querySelector('.item-amount');
+        const qtyInput = row.querySelector('.item-qty');
+        const priceInput = row.querySelector('.item-price');
+        const totalCell = row.querySelector('.item-total');
 
-        if (minSelect && rateInput && amountCell) {
-          const mins = parseFloat(minSelect.value) || 0;
-          const rate = parseFloat(rateInput.value) || 0;
-          const amount = (mins / 60) * rate;
+        if (qtyInput && priceInput && totalCell) {
+          const qty = parseFloat(qtyInput.value) || 0;
+          const price = parseFloat(priceInput.value) || 0;
+          const total = qty * price;
 
-          totalMins += mins;
-          grandTotal += amount;
-
-          amountCell.innerText = `$${amount.toFixed(2)}`;
+          grandTotal += total;
+          totalCell.innerText = `$${total.toFixed(2)}`;
         }
       });
 
-      const hours = (totalMins / 60).toFixed(2);
-      document.getElementById('total-minutes').innerText = `${totalMins} mins (${hours} hrs)`;
       document.getElementById('grand-total').innerText = `$${grandTotal.toFixed(2)}`;
     }
 
     function addCustomRow() {
-      // Get selected skaters
-      const checkedSkaters = Array.from(document.querySelectorAll('.skater-check:checked')).map(cb => cb.value);
-      const customSkater = document.getElementById('custom-skater').value.trim();
-      if (customSkater) checkedSkaters.push(customSkater);
-
-      const skaterText = checkedSkaters.length > 0 ? checkedSkaters.join(', ') : 'General Lesson';
-      const focusText = document.getElementById('quick-focus').value.trim();
-      const fullDesc = focusText ? `${skaterText} (${focusText})` : skaterText;
-
-      const lessonDate = document.getElementById('quick-date').value || todayStr;
-      const lessonType = document.getElementById('quick-type').value;
-      const duration = document.getElementById('quick-min').value;
-      const defaultRate = document.getElementById('default-rate').value || 30;
+      const skater = document.getElementById('add-skater').value.trim() || 'Skater';
+      const date = document.getElementById('add-date').value.trim() || 'Date';
+      const desc = document.getElementById('add-type').value;
+      const qty = parseFloat(document.getElementById('add-qty').value) || 1;
+      const price = parseFloat(document.getElementById('add-price').value) || 0;
 
       const tbody = document.getElementById('line-items');
       const tr = document.createElement('tr');
       tr.className = "border-b border-gray-100 text-sm hover:bg-gray-50";
       tr.innerHTML = `
-        <td class="py-2 px-2">
-          <input type="date" value="${lessonDate}" class="item-date outline-none bg-transparent w-full">
-        </td>
-        <td class="py-2 px-2">
-          <select class="item-type text-xs border border-gray-200 rounded p-1 outline-none bg-white w-full">
-            <option value="Private" ${lessonType === 'Private' ? 'selected' : ''}>Private</option>
-            <option value="Semi-Private" ${lessonType === 'Semi-Private' ? 'selected' : ''}>Semi-Private</option>
-            <option value="Group" ${lessonType === 'Group' ? 'selected' : ''}>Group</option>
-            <option value="CanSkate / Club" ${lessonType === 'CanSkate / Club' ? 'selected' : ''}>CanSkate / Club</option>
-          </select>
-        </td>
-        <td class="py-2 px-2">
-          <input type="text" value="${fullDesc}" class="item-desc w-full outline-none bg-transparent border-b border-transparent focus:border-blue-400">
-        </td>
-        <td class="py-2 px-2 text-center">
-          <select onchange="calculateTotals()" class="item-min text-xs border border-gray-200 rounded p-1 outline-none bg-white text-center w-full">
-            <option value="15" ${duration === '15' ? 'selected' : ''}>15 min</option>
-            <option value="30" ${duration === '30' ? 'selected' : ''}>30 min</option>
-            <option value="45" ${duration === '45' ? 'selected' : ''}>45 min</option>
-            <option value="60" ${duration === '60' ? 'selected' : ''}>60 min</option>
-            <option value="10" ${duration === '10' ? 'selected' : ''}>10 min</option>
-          </select>
-        </td>
-        <td class="py-2 px-2 text-right">
-          <input type="number" value="${defaultRate}" oninput="calculateTotals()" class="item-rate w-16 text-right outline-none bg-transparent border-b border-transparent focus:border-blue-400">
-        </td>
-        <td class="py-2 px-2 text-right font-semibold item-amount">$0.00</td>
-        <td class="py-2 px-2 text-center no-print">
-          <button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button>
-        </td>
+        <td class="py-2 px-2"><input type="text" value="${skater}" class="item-skater w-full outline-none bg-transparent"></td>
+        <td class="py-2 px-2"><input type="text" value="${date}" class="item-date w-full outline-none bg-transparent"></td>
+        <td class="py-2 px-2"><input type="text" value="${desc}" class="item-desc w-full outline-none bg-transparent"></td>
+        <td class="py-2 px-2 text-center"><input type="number" value="${qty}" oninput="calculateTotals()" class="item-qty w-12 text-center outline-none bg-transparent"></td>
+        <td class="py-2 px-2 text-right">$<input type="number" step="0.01" value="${price.toFixed(2)}" oninput="calculateTotals()" class="item-price w-16 text-right outline-none bg-transparent"></td>
+        <td class="py-2 px-2 text-right font-semibold item-total">$${(qty * price).toFixed(2)}</td>
+        <td class="py-2 px-2 text-center no-print"><button onclick="removeRow(this)" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
       `;
 
       tbody.appendChild(tr);
-      
-      // Reset quick controls
-      document.querySelectorAll('.skater-check').forEach(cb => cb.checked = false);
-      document.getElementById('custom-skater').value = '';
-      document.getElementById('quick-focus').value = '';
+
+      // Reset Inputs
+      document.getElementById('add-skater').value = '';
+      document.getElementById('add-date').value = '';
 
       calculateTotals();
     }
@@ -307,7 +252,7 @@
       const element = document.getElementById('invoice');
       const opt = {
         margin:       0.4,
-        filename:     'skating_coaching_invoice.pdf',
+        filename:     'skating_invoice.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -316,7 +261,6 @@
       html2pdf().set(opt).from(element).save();
     }
 
-    // Initial calculation
     calculateTotals();
   </script>
 </body>
